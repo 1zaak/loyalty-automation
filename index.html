@@ -40,14 +40,25 @@
                             <output id="list"></output>                        
 
                             <script>
+                            var allUniqueOrders = [];
                             function sameOrderNo(currentRow, nextRow) {                           
                                 return currentRow[10] === nextRow[10] ? true : false                                
                             }
 
-                            function processSameOrderNo(currentRow, nextRow) {
-                                let points = (+currentRow[11] + +nextRow[11]) / 5
-                                console.log('Points for order ', nextRow[10], ' is ', points)
+                            function getAllOrderNos(rows) {
+                                console.log('allUniqueOrders before: ', allUniqueOrders)
+                                rows.forEach(function(row) {
+                                    allUniqueOrders.push(row[10]);
+                                })
+                                
+                                allUniqueOrders = _.uniq(allUniqueOrders);
+                                console.log('allUniqueOrders after: ', allUniqueOrders)
                             }
+
+                            // function processSameOrderNo(currentRow, nextRow) {
+                            //     let points = (+currentRow[11] + +nextRow[11]) / 5
+                            //     console.log('Points for order ', nextRow[10], ' is ', points)
+                            // }
 
                             function handleFileSelect(evt) {
                                 function now() {
@@ -91,19 +102,28 @@
                                         {
                                             end = now();
                                             results.data.shift();
-                                            // console.log("Done with all files", results.data);
+                                            
+                                            
+                                            console.log("Done with all files", results.data);
+                                            getAllOrderNos(results.data);
                                             // var final = _.unionWith(results.data, _compareOrderNo);
-                                            var final = _.uniqBy(results.data, function(item) { 
-                                                return JSON.stringify(item); 
-                                            });
+                                            // var final = _.uniqBy(results.data, function(item) { 
+                                            //     return JSON.stringify(item); 
+                                            // });
 
-                                            _.map(results.data, function(row, index, collection){
-                                                let nextRow = collection[index + 1];
-                                                if (nextRow && sameOrderNo(row, nextRow)) {
-                                                    processSameOrderNo(row, nextRow)
-                                                }
+                                            // _.uniqWith(results.data, function(currentRow, nextRow) {
+                                            //     if (currentRow[10] === nextRow[10]) {
+                                                    
+                                            //     }
+                                            // })
+
+                                            // _.map(results.data, function(row, index, collection){
+                                            //     let nextRow = collection[index + 1];
+                                            //     if (nextRow && sameOrderNo(row, nextRow)) {
+                                            //         processSameOrderNo(row, nextRow)
+                                            //     }
                                                 
-                                            })
+                                            // })
                                             
                                         }
                                     })
