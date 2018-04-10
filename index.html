@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Lazada Loyalty Calculation</title>
+    <meta name="description" content="A ready-to-deploy static web app template">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script
+  src="https://code.jquery.com/jquery-3.3.1.js"
+  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+  crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.0.7/dist/frappe-gantt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.5/lodash.min.js"></script>    
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hack/0.8.0/hack.css">
+</head>    
+<body class="main container" style="font-family: 'Raleway', sans-serif; max-width: 85vw">
+        <strong>
+            <h1 class="grid">
+                <span class="alert alert-success cell -6of12">Lazada Loyalty Calculation</span>            
+            </h1>
+        </strong>
+
+    
+    <!-- All Notes -->
+    <p>
+        <h2><b>Upload list</b></h2>
+        <div class="grid">
+            <!-- Upload file -->
+            <div class="cell -6of12">
+                <div class="card">
+                    <header class="card-header">Upload file here</header>
+                    <div class="card-content container">             
+                            <input type="file" id="files" name="files[]" multiple />
+                            <output id="list"></output>                        
+
+                            <script>
+                            function sameOrderNo(currentRow, nextRow) {                           
+                                return currentRow[10] === nextRow[10] ? true : false                                
+                            }
+
+                            function processSameOrderNo(currentRow, nextRow) {
+                                let points = (+currentRow[11] + +nextRow[11]) / 5
+                                console.log('Points for order ', nextRow[10], ' is ', points)
+                            }
+
+                            function handleFileSelect(evt) {
+                                function now() {
+                                    return typeof window.performance !== 'undefined'
+                                            ? window.performance.now()
+                                            : 0;
+                                }
+                            
+                                var files = evt.target.files; // FileList object
+
+                                // Loop through the FileList and render image files as thumbnails.
+                                for (var i = 0, f; f = files[i]; i++) {
+                                    // console.log(f);
+                                    Papa.parse(f, {    
+                                        config:  {
+                                            delimiter: ',',
+                                            header: $('#header').prop('checked'),
+                                            dynamicTyping: $('#dynamicTyping').prop('checked'),
+                                            skipEmptyLines: $('#skipEmptyLines').prop('checked'),
+                                            preview: parseInt($('#preview').val() || 0),
+                                            step: $('#stream').prop('checked') ? stepFn : undefined,
+                                            encoding: $('#encoding').val(),
+                                            worker: $('#worker').prop('checked'),
+                                            comments: $('#comments').val(),
+                                            complete: function(results){ console.log("COMPLETE:", results) },
+                                            error: function(){ console.log("ERROR:", err, file) },
+                                            download: false
+                                        },                              
+                                        before: function(file, inputElem)
+                                        {
+                                            start = now();
+                                            console.log("Parsing file...", file);
+                                        },
+                                        error: function(err, file)
+                                        {
+                                            console.log("ERROR:", err, file);
+                                            firstError = firstError || err;
+                                            errorCount++;
+                                        },
+                                        complete: function(results)
+                                        {
+                                            end = now();
+                                            results.data.shift();
+                                            // console.log("Done with all files", results.data);
+                                            // var final = _.unionWith(results.data, _compareOrderNo);
+                                            var final = _.uniqBy(results.data, function(item) { 
+                                                return JSON.stringify(item); 
+                                            });
+
+                                            _.map(results.data, function(row, index, collection){
+                                                let nextRow = collection[index + 1];
+                                                if (nextRow && sameOrderNo(row, nextRow)) {
+                                                    processSameOrderNo(row, nextRow)
+                                                }
+                                                
+                                            })
+                                            
+                                        }
+                                    })
+                                    // Only process image files.
+                                    if (!f.type.match('image.*')) {
+                                        continue;
+                                    }
+
+                                    var reader = new FileReader();
+
+                                    // Closure to capture the file information.
+                                    reader.onload = (function(theFile) {
+                                        return function(e) {
+                                        // Render thumbnail.
+                                        var span = document.createElement('span');
+                                        span.innerHTML = ['<img class="thumb" src="', e.target.result,
+                                                            '" title="', escape(theFile.name), '"/>'].join('');
+                                        document.getElementById('list').insertBefore(span, null);
+                                        };
+                                    })(f);
+
+                                    // Read in the image file as a data URL.
+                                    reader.readAsDataURL(f);
+                                }
+                            }
+
+                            document.getElementById('files').addEventListener('change', handleFileSelect, false);
+                            </script>
+                    </div>
+                </div>
+            </div>           
+        </div>
+    </p>
+
+    <!-- Gantt Chart -->
+    <!-- <p>
+        <h2><b>Project Milestones</b></h2>
+        <div style="overflow: scroll;border: 1px solid #ccc;">
+                <svg height="314" width="3458" id="gantt"></svg>
+        </div>
+    </p> -->
+</body>
+
+</html>
