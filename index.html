@@ -93,7 +93,7 @@
             $("#loader-placeholder").append('<div class="loader"></div>')   
             $("#table").remove()
             $(".inner").append('<div id="table"></div>')
-
+            document.getElementById("downloadCsv").style.visibility = "hidden"
 
             function now() {
                 return typeof window.performance !== 'undefined'
@@ -114,6 +114,11 @@
                         skipEmptyLines: true,
                         worker: true,
                         comments: true,
+                        chunk: function(results, parser) {
+                            console.log("Row data:", results.data);
+                            console.log("Row errors:", results.errors);
+                        },
+                        fastMode: true,
                         complete: function(results){ console.log("COMPLETE:", results) },
                         error: function(){ console.log("ERROR:", err, file) },
                         download: false
@@ -133,7 +138,7 @@
                     {
                         end = now();                                                                                                                               
                         getAllOrderNos(results.data);
-
+                        
                         results.data.forEach(function(row) {
                             let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
                             let currentOrder = row[10]
@@ -141,7 +146,7 @@
                             let price = +row[11]
                             let createdDate = row[7]
                             let bigPointId = row[27]
-                            if (!couponCode && _.includes(allUniqueOrders, currentOrder)) {                                                    
+                            if (!couponCode && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                                                    
                                 let pointsToAdd = price / 5;                                             
                                 allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
                                 allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
@@ -174,7 +179,7 @@
                         // Download csv
                         csv = Papa.unparse(finalResults)
                         if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
-
+                        
                         $(".loader").remove();
                     }
                 })
