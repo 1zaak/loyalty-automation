@@ -29,12 +29,8 @@
                 <span class="alert alert-success cell -12of12">Lazada Loyalty Calculation</span>            
             </h1>
         </strong>
-
-    
-    <!-- All Notes -->
             
-        <div class="grid">
-            <!-- Upload file -->
+        <div class="grid">            
             <div class="cell -12of12">
                     <div class="alert alert-info">
                         <h2>Features</h2>
@@ -44,8 +40,7 @@
                             <input disabled type="checkbox" > Exclusion lists (1) Reseller (2) SKU<br>
                             <input disabled type="checkbox" > Extra points list (1) SKUs (2) Datetime/Period - First 5000..etc<br>
                     </div>
-                <div class="card">                        
-                    
+                <div class="card">                                            
                     <header class="card-header">Upload CSV here</header>
                     <div class="card-content container">             
                             <div class="inner">
@@ -57,10 +52,6 @@
                     </div>                           
                     <button id="downloadCsv" type="button" class="btn btn-primary btn-block">Download</button>         
                 </div>
-
-                
-
-                
             </div>           
         </div>
     
@@ -105,35 +96,20 @@
 
             // Loop through the FileList and render image files as thumbnails.
             for (var i = 0, f; f = files[i]; i++) {
+                // Only process csv files.
+                if (!f.type.match('text/csv')) {
+                    continue;
+                }
                 // console.log(f);
                 Papa.parse(f, {    
                     config:  {
                         delimiter: ',',
                         header: true,
-                        dynamicTyping: true,
                         skipEmptyLines: true,
                         worker: true,
-                        comments: true,
-                        chunk: function(results, parser) {
-                            console.log("Row data:", results.data);
-                            console.log("Row errors:", results.errors);
-                        },
                         fastMode: true,
-                        complete: function(results){ console.log("COMPLETE:", results) },
-                        error: function(){ console.log("ERROR:", err, file) },
                         download: false
-                    },                              
-                    before: function(file, inputElem)
-                    {
-                        start = now();
-                        console.log("Parsing file...", file);
-                    },
-                    error: function(err, file)
-                    {
-                        console.log("ERROR:", err, file);
-                        firstError = firstError || err;
-                        errorCount++;
-                    },
+                    },        
                     complete: function(results)
                     {
                         end = now();                                                                                                                               
@@ -180,17 +156,11 @@
                         csv = Papa.unparse(finalResults)
                         if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
                         
-                        $(".loader").remove();
+                        
                     }
                 })
-
-                // Only process csv files.
-                if (!f.type.match('text/csv')) {
-                    continue;
-                }
-
-                
             }
+            $(".loader").remove();
         }
 
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
