@@ -15,14 +15,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.5/lodash.min.js"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.5/lodash.min.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hack/0.8.0/hack.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.4.6/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.4.6/js/tabulator.min.js"></script>
 </head>    
-<body class="main container" style="font-family: 'Raleway', sans-serif; max-width: 85vw">
+<body class="main container" style="font-family: 'Raleway', sans-serif">
         <strong>
             <h1 class="grid">
-                <span class="alert alert-success cell -6of12">Lazada Loyalty Calculation</span>            
+                <span class="alert alert-success cell -12of12">Lazada Loyalty Calculation</span>            
             </h1>
         </strong>
 
@@ -32,40 +36,33 @@
         <h2><b>Upload list</b></h2>
         <div class="grid">
             <!-- Upload file -->
-            <div class="cell -6of12">
+            <div class="cell -12of12">
                 <div class="card">
                     <header class="card-header">Upload file here</header>
                     <div class="card-content container">             
                             <input type="file" id="files" name="files[]" multiple />
-                            <output id="list"></output>                        
-
+                            
                             <script>
                             var allUniqueOrders = [];
                             var allUniqueOrdersWithPoints = [];
+                            var finalResults = [];
                             function sameOrderNo(currentRow, nextRow) {                           
                                 return currentRow[10] === nextRow[10] ? true : false                                
                             }
 
                             function getAllOrderNos(rows) {
-                                console.log('allUniqueOrders before: ', allUniqueOrders)
                                 rows.forEach(function(row) {
                                     allUniqueOrders.push(row[10]);
                                 })
-                                
                                 allUniqueOrders = _.uniq(allUniqueOrders);
                                 allUniqueOrders.forEach(function(orderNo) {
                                     allUniqueOrdersWithPoints.push({
-                                        orderNo: orderNo,
-                                        points: 0
+                                        "orderNo": orderNo,
+                                        "totalPoints": 0,
+                                        "totalPrice": 0,
                                     })
                                 })
-                                console.log('allUniqueOrdersWithPoints after: ', allUniqueOrdersWithPoints)
-                            }
-
-                            // function processSameOrderNo(currentRow, nextRow) {
-                            //     let points = (+currentRow[11] + +nextRow[11]) / 5
-                            //     console.log('Points for order ', nextRow[10], ' is ', points)
-                            // }
+                            }                    
 
                             function handleFileSelect(evt) {
                                 function now() {
@@ -108,65 +105,83 @@
                                         complete: function(results)
                                         {
                                             end = now();
-                                            results.data.shift();
-                                            
-                                            
-                                            console.log("Done with all files", results.data);
+                                            results.data.shift();                                                                                                                                    
                                             getAllOrderNos(results.data);
                                             results.data.forEach(function(row) {
-                                                if (_.includes(allUniqueOrders, row[10])) {
-                                                    let pointsToAdd = +row[11] / 5;
-                                                    let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
-                                                    allUniqueOrdersWithPoints[indexToChange].points += pointsToAdd
+                                                let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
+                                                let currentOrder = row[10]
+                                                let couponCode = row[4]
+                                                let price = +row[11]
+                                                let createdDate = row[7]
+                                                let bigPointId = row[27]
+                                                if (!couponCode && _.includes(allUniqueOrders, currentOrder)) {                                                    
+                                                    let pointsToAdd = price / 5;                                             
+                                                    allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
+                                                    allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
                                                 }
+                                                allUniqueOrdersWithPoints[indexToChange]["totalPoints"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPoints, 2)
+                                                allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
+                                                allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
+                                                allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
                                             })
-                                            console.log(allUniqueOrdersWithPoints);
-                                            // var final = _.unionWith(results.data, _compareOrderNo);
-                                            // var final = _.uniqBy(results.data, function(item) { 
-                                            //     return JSON.stringify(item); 
-                                            // });
-
-                                            // _.uniqWith(results.data, function(currentRow, nextRow) {
-                                            //     if (currentRow[10] === nextRow[10]) {
-                                                    
-                                            //     }
-                                            // })
-
-                                            // _.map(results.data, function(row, index, collection){
-                                            //     let nextRow = collection[index + 1];
-                                            //     if (nextRow && sameOrderNo(row, nextRow)) {
-                                            //         processSameOrderNo(row, nextRow)
-                                            //     }
-                                                
-                                            // })
                                             
+                                            finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
+                                                return allUniqueOrdersWithPoint.totalPoints > 0 
+                                            })
+
+                                            console.log(finalResults)
+                                            console.log(Array.isArray(finalResults))
+                                            $("#table").tabulator({
+                                                height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+                                                layout:"fitDataFill", //fit columns to width of table (optional)
+                                                columns:[ //Define Table Columns
+                                                    {title:"Order No", field:"orderNo",},
+                                                    {title:"Total Points", field:"totalPoints"},
+                                                    {title:"Total Price", field:"totalPrice"},
+                                                    {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
+                                                    {title:"Big Point ID", field:"bigPointId"},
+                                                ],
+                                            });
+
+                                            //load sample data into the table
+                                            $("#table").tabulator("setData", finalResults);
+
+                                            // Download csv
+                                            let csv = Papa.unparse(finalResults)
+                                            download('loyalty-automation', csv)
                                         }
                                     })
-                                    // Only process image files.
-                                    if (!f.type.match('image.*')) {
+
+                                    // Only process csv files.
+                                    if (!f.type.match('text/csv')) {
                                         continue;
                                     }
 
-                                    var reader = new FileReader();
+                                    function download(filename, text) {
+                                        var element = document.createElement('a');
+                                        element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(text));
+                                        element.setAttribute('download', filename);
 
-                                    // Closure to capture the file information.
-                                    reader.onload = (function(theFile) {
-                                        return function(e) {
-                                        // Render thumbnail.
-                                        var span = document.createElement('span');
-                                        span.innerHTML = ['<img class="thumb" src="', e.target.result,
-                                                            '" title="', escape(theFile.name), '"/>'].join('');
-                                        document.getElementById('list').insertBefore(span, null);
-                                        };
-                                    })(f);
+                                        element.style.display = 'none';
+                                        document.body.appendChild(element);
 
-                                    // Read in the image file as a data URL.
-                                    reader.readAsDataURL(f);
+                                        element.click();
+
+                                        document.body.removeChild(element);
+                                    }
                                 }
                             }
 
                             document.getElementById('files').addEventListener('change', handleFileSelect, false);
-                            </script>
+                            </script>                                                    
+                    </div>                    
+                </div>
+
+                <div class="card">
+                    <header class="card-header">Result</header>
+                        <div class="card-content">
+                            <div id="table"></div>                       
+                            <button id="download" type="button" class="btn btn-primary btn-block">Download</button>
                     </div>
                 </div>
             </div>           
