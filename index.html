@@ -37,20 +37,29 @@
         <div class="grid">
             <!-- Upload file -->
             <div class="cell -12of12">
-                <div class="card">
+                    <div class="alert alert-info">
+                            <input type="checkbox" checked> RM5 = 1 point<br>
+                            <input type="checkbox" checked> Merge more than 1 entry into 1 order<br>
+                            <input type="checkbox" checked> ONLY Purchase made without Coupons and SC coupons are eligible for point<br>
+                            <input type="checkbox" > Exclusion lists need to be processed for (1) Reseller (2) SKU<br>
+                            <input type="checkbox" > Extra points list also need to be processed for (1) SKUs (2) Datetime/Period - First 5000..etc<br>
+                    </div>
+                <div class="card">                        
+                    
                     <header class="card-header">Upload file here</header>
                     <div class="card-content container">             
-                        <input type="file" id="files" name="files[]" multiple />                                                                                                                              
-                    </div>                    
+                            <div class="inner">
+                                <input type="file" id="files" name="files[]" multiple />   
+                                <hr>                 
+                                <div id="table"></div>  
+                            </div>
+                    </div>                           
+                    <button id="downloadCsv" type="button" class="btn btn-primary btn-block">Download</button>         
                 </div>
 
-                <div class="card">
-                    <header class="card-header">Result</header>
-                        <div class="card-content">
-                            <div id="table"></div>                       
-                            <button id="downloadCsv" type="button" class="btn btn-primary btn-block">Download</button>
-                    </div>
-                </div>
+                
+
+                
             </div>           
         </div>
     </p>
@@ -60,6 +69,7 @@
         var allUniqueOrdersWithPoints = [];
         var finalResults = [];
         var csv = [];
+        document.getElementById("downloadCsv").style.visibility = "hidden";
         function sameOrderNo(currentRow, nextRow) {                           
             return currentRow[10] === nextRow[10] ? true : false                                
         }
@@ -162,6 +172,7 @@
 
                         // Download csv
                         csv = Papa.unparse(finalResults)
+                        if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
                     }
                 })
 
