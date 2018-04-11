@@ -100,8 +100,7 @@
                         download: false
                     },        
                     complete: function(results)
-                    {
-                        end = now();                                                                                                                               
+                    {                                                                                                                     
                         getAllOrderNos(results.data);
                         
                         results.data.forEach(function(row) {
