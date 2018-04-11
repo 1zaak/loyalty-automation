@@ -50,7 +50,8 @@
                     <div class="card-content container">             
                             <div class="inner">
                                 <input type="file" id="files" name="files[]" multiple />   
-                                <hr>                 
+                                <hr>              
+                                <div id="loader-placeholder"></div>   
                                 <div id="table"></div>  
                             </div>
                     </div>                           
@@ -89,6 +90,8 @@
         }                    
 
         function handleFileSelect(evt) {
+            $("#loader-placeholder").append('<div class="loader"></div>')   
+            
             function now() {
                 return typeof window.performance !== 'undefined'
                         ? window.performance.now()
@@ -103,14 +106,11 @@
                 Papa.parse(f, {    
                     config:  {
                         delimiter: ',',
-                        header: $('#header').prop('checked'),
-                        dynamicTyping: $('#dynamicTyping').prop('checked'),
-                        skipEmptyLines: $('#skipEmptyLines').prop('checked'),
-                        preview: parseInt($('#preview').val() || 0),
-                        step: $('#stream').prop('checked') ? stepFn : undefined,
-                        encoding: $('#encoding').val(),
-                        worker: $('#worker').prop('checked'),
-                        comments: $('#comments').val(),
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
+                        worker: true,
+                        comments: true,
                         complete: function(results){ console.log("COMPLETE:", results) },
                         error: function(){ console.log("ERROR:", err, file) },
                         download: false
@@ -128,9 +128,9 @@
                     },
                     complete: function(results)
                     {
-                        end = now();
-                        results.data.shift();                                                                                                                                    
+                        end = now();                                                                                                                               
                         getAllOrderNos(results.data);
+
                         results.data.forEach(function(row) {
                             let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
                             let currentOrder = row[10]
@@ -151,10 +151,8 @@
                         
                         finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
                             return allUniqueOrdersWithPoint.totalPoints > 0 
-                        })
+                        })                    
 
-                        console.log(finalResults)
-                        console.log(Array.isArray(finalResults))
                         $("#table").tabulator({
                             height:450, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
                             layout:"fitDataFill", //fit columns to width of table (optional)
@@ -169,10 +167,12 @@
 
                         //load sample data into the table
                         $("#table").tabulator("setData", finalResults);
-
+                        
                         // Download csv
                         csv = Papa.unparse(finalResults)
                         if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
+
+                        $(".loader").remove();
                     }
                 })
 
@@ -186,7 +186,7 @@
         }
 
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
-        window.onload = function() { 
+        window.onload = function() {
             document.getElementById("downloadCsv").onclick = function() { 
                 var element = document.createElement('a');
                 element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
@@ -203,6 +203,22 @@
         
         </script>  
 
+        <style>
+        .loader {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 0 0;            
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        </style>
 </body>
 
 </html>
