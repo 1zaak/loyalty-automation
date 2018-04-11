@@ -85,21 +85,10 @@
             $("#table").remove()
             $(".inner").append('<div id="table"></div>')
             document.getElementById("downloadCsv").style.visibility = "hidden"
-
-            function now() {
-                return typeof window.performance !== 'undefined'
-                        ? window.performance.now()
-                        : 0;
-            }
-        
             var files = evt.target.files; // FileList object
 
             // Loop through the FileList and render image files as thumbnails.
             for (var i = 0, f; f = files[i]; i++) {
-                // Only process csv files.
-                if (!f.type.match('text/csv')) {
-                    continue;
-                }
                 // console.log(f);
                 Papa.parse(f, {    
                     config:  {
@@ -156,11 +145,10 @@
                         csv = Papa.unparse(finalResults)
                         if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
                         
-                        
+                        $(".loader").remove();
                     }
                 })
             }
-            $(".loader").remove();
         }
 
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
