@@ -91,7 +91,10 @@
 
         function handleFileSelect(evt) {
             $("#loader-placeholder").append('<div class="loader"></div>')   
-            
+            $("#table").remove()
+            $(".inner").append('<div id="table"></div>')
+
+
             function now() {
                 return typeof window.performance !== 'undefined'
                         ? window.performance.now()
