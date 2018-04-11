@@ -40,140 +40,7 @@
                 <div class="card">
                     <header class="card-header">Upload file here</header>
                     <div class="card-content container">             
-                            <input type="file" id="files" name="files[]" multiple />
-                            
-                            <script>
-                            var allUniqueOrders = [];
-                            var allUniqueOrdersWithPoints = [];
-                            var finalResults = [];
-                            function sameOrderNo(currentRow, nextRow) {                           
-                                return currentRow[10] === nextRow[10] ? true : false                                
-                            }
-
-                            function getAllOrderNos(rows) {
-                                rows.forEach(function(row) {
-                                    allUniqueOrders.push(row[10]);
-                                })
-                                allUniqueOrders = _.uniq(allUniqueOrders);
-                                allUniqueOrders.forEach(function(orderNo) {
-                                    allUniqueOrdersWithPoints.push({
-                                        "orderNo": orderNo,
-                                        "totalPoints": 0,
-                                        "totalPrice": 0,
-                                    })
-                                })
-                            }                    
-
-                            function handleFileSelect(evt) {
-                                function now() {
-                                    return typeof window.performance !== 'undefined'
-                                            ? window.performance.now()
-                                            : 0;
-                                }
-                            
-                                var files = evt.target.files; // FileList object
-
-                                // Loop through the FileList and render image files as thumbnails.
-                                for (var i = 0, f; f = files[i]; i++) {
-                                    // console.log(f);
-                                    Papa.parse(f, {    
-                                        config:  {
-                                            delimiter: ',',
-                                            header: $('#header').prop('checked'),
-                                            dynamicTyping: $('#dynamicTyping').prop('checked'),
-                                            skipEmptyLines: $('#skipEmptyLines').prop('checked'),
-                                            preview: parseInt($('#preview').val() || 0),
-                                            step: $('#stream').prop('checked') ? stepFn : undefined,
-                                            encoding: $('#encoding').val(),
-                                            worker: $('#worker').prop('checked'),
-                                            comments: $('#comments').val(),
-                                            complete: function(results){ console.log("COMPLETE:", results) },
-                                            error: function(){ console.log("ERROR:", err, file) },
-                                            download: false
-                                        },                              
-                                        before: function(file, inputElem)
-                                        {
-                                            start = now();
-                                            console.log("Parsing file...", file);
-                                        },
-                                        error: function(err, file)
-                                        {
-                                            console.log("ERROR:", err, file);
-                                            firstError = firstError || err;
-                                            errorCount++;
-                                        },
-                                        complete: function(results)
-                                        {
-                                            end = now();
-                                            results.data.shift();                                                                                                                                    
-                                            getAllOrderNos(results.data);
-                                            results.data.forEach(function(row) {
-                                                let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
-                                                let currentOrder = row[10]
-                                                let couponCode = row[4]
-                                                let price = +row[11]
-                                                let createdDate = row[7]
-                                                let bigPointId = row[27]
-                                                if (!couponCode && _.includes(allUniqueOrders, currentOrder)) {                                                    
-                                                    let pointsToAdd = price / 5;                                             
-                                                    allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
-                                                    allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
-                                                }
-                                                allUniqueOrdersWithPoints[indexToChange]["totalPoints"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPoints, 2)
-                                                allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
-                                                allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
-                                                allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
-                                            })
-                                            
-                                            finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
-                                                return allUniqueOrdersWithPoint.totalPoints > 0 
-                                            })
-
-                                            console.log(finalResults)
-                                            console.log(Array.isArray(finalResults))
-                                            $("#table").tabulator({
-                                                height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-                                                layout:"fitDataFill", //fit columns to width of table (optional)
-                                                columns:[ //Define Table Columns
-                                                    {title:"Order No", field:"orderNo",},
-                                                    {title:"Total Points", field:"totalPoints"},
-                                                    {title:"Total Price", field:"totalPrice"},
-                                                    {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
-                                                    {title:"Big Point ID", field:"bigPointId"},
-                                                ],
-                                            });
-
-                                            //load sample data into the table
-                                            $("#table").tabulator("setData", finalResults);
-
-                                            // Download csv
-                                            let csv = Papa.unparse(finalResults)
-                                            download('loyalty-automation', csv)
-                                        }
-                                    })
-
-                                    // Only process csv files.
-                                    if (!f.type.match('text/csv')) {
-                                        continue;
-                                    }
-
-                                    function download(filename, text) {
-                                        var element = document.createElement('a');
-                                        element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(text));
-                                        element.setAttribute('download', filename);
-
-                                        element.style.display = 'none';
-                                        document.body.appendChild(element);
-
-                                        element.click();
-
-                                        document.body.removeChild(element);
-                                    }
-                                }
-                            }
-
-                            document.getElementById('files').addEventListener('change', handleFileSelect, false);
-                            </script>                                                    
+                        <input type="file" id="files" name="files[]" multiple />                                                                                                                              
                     </div>                    
                 </div>
 
@@ -181,20 +48,150 @@
                     <header class="card-header">Result</header>
                         <div class="card-content">
                             <div id="table"></div>                       
-                            <button id="download" type="button" class="btn btn-primary btn-block">Download</button>
+                            <button id="downloadCsv" type="button" class="btn btn-primary btn-block">Download</button>
                     </div>
                 </div>
             </div>           
         </div>
     </p>
 
-    <!-- Gantt Chart -->
-    <!-- <p>
-        <h2><b>Project Milestones</b></h2>
-        <div style="overflow: scroll;border: 1px solid #ccc;">
-                <svg height="314" width="3458" id="gantt"></svg>
-        </div>
-    </p> -->
+    <script>
+        var allUniqueOrders = [];
+        var allUniqueOrdersWithPoints = [];
+        var finalResults = [];
+        var csv = [];
+        function sameOrderNo(currentRow, nextRow) {                           
+            return currentRow[10] === nextRow[10] ? true : false                                
+        }
+
+        function getAllOrderNos(rows) {
+            rows.forEach(function(row) {
+                allUniqueOrders.push(row[10]);
+            })
+            allUniqueOrders = _.uniq(allUniqueOrders);
+            allUniqueOrders.forEach(function(orderNo) {
+                allUniqueOrdersWithPoints.push({
+                    "orderNo": orderNo,
+                    "totalPoints": 0,
+                    "totalPrice": 0,
+                })
+            })
+        }                    
+
+        function handleFileSelect(evt) {
+            function now() {
+                return typeof window.performance !== 'undefined'
+                        ? window.performance.now()
+                        : 0;
+            }
+        
+            var files = evt.target.files; // FileList object
+
+            // Loop through the FileList and render image files as thumbnails.
+            for (var i = 0, f; f = files[i]; i++) {
+                // console.log(f);
+                Papa.parse(f, {    
+                    config:  {
+                        delimiter: ',',
+                        header: $('#header').prop('checked'),
+                        dynamicTyping: $('#dynamicTyping').prop('checked'),
+                        skipEmptyLines: $('#skipEmptyLines').prop('checked'),
+                        preview: parseInt($('#preview').val() || 0),
+                        step: $('#stream').prop('checked') ? stepFn : undefined,
+                        encoding: $('#encoding').val(),
+                        worker: $('#worker').prop('checked'),
+                        comments: $('#comments').val(),
+                        complete: function(results){ console.log("COMPLETE:", results) },
+                        error: function(){ console.log("ERROR:", err, file) },
+                        download: false
+                    },                              
+                    before: function(file, inputElem)
+                    {
+                        start = now();
+                        console.log("Parsing file...", file);
+                    },
+                    error: function(err, file)
+                    {
+                        console.log("ERROR:", err, file);
+                        firstError = firstError || err;
+                        errorCount++;
+                    },
+                    complete: function(results)
+                    {
+                        end = now();
+                        results.data.shift();                                                                                                                                    
+                        getAllOrderNos(results.data);
+                        results.data.forEach(function(row) {
+                            let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
+                            let currentOrder = row[10]
+                            let couponCode = row[4]
+                            let price = +row[11]
+                            let createdDate = row[7]
+                            let bigPointId = row[27]
+                            if (!couponCode && _.includes(allUniqueOrders, currentOrder)) {                                                    
+                                let pointsToAdd = price / 5;                                             
+                                allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
+                                allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
+                            }
+                            allUniqueOrdersWithPoints[indexToChange]["totalPoints"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPoints, 2)
+                            allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
+                            allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
+                            allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
+                        })
+                        
+                        finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
+                            return allUniqueOrdersWithPoint.totalPoints > 0 
+                        })
+
+                        console.log(finalResults)
+                        console.log(Array.isArray(finalResults))
+                        $("#table").tabulator({
+                            height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+                            layout:"fitDataFill", //fit columns to width of table (optional)
+                            columns:[ //Define Table Columns
+                                {title:"Order No", field:"orderNo",},
+                                {title:"Total Points", field:"totalPoints"},
+                                {title:"Total Price", field:"totalPrice"},
+                                {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
+                                {title:"Big Point ID", field:"bigPointId"},
+                            ],
+                        });
+
+                        //load sample data into the table
+                        $("#table").tabulator("setData", finalResults);
+
+                        // Download csv
+                        csv = Papa.unparse(finalResults)
+                    }
+                })
+
+                // Only process csv files.
+                if (!f.type.match('text/csv')) {
+                    continue;
+                }
+
+                
+            }
+        }
+
+        document.getElementById('files').addEventListener('change', handleFileSelect, false);
+        window.onload = function() { 
+            document.getElementById("downloadCsv").onclick = function() { 
+                var element = document.createElement('a');
+                element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+                element.setAttribute('download', 'loyalty-automation-' + Date.now());
+
+                element.style.display = 'none';
+                document.body.appendChild(element);
+
+                element.click();
+
+                document.body.removeChild(element);
+            };
+        };
+        
+        </script>  
+
 </body>
 
 </html>
