@@ -1,6 +1,6 @@
-# Lazada Loyalty Calculation
+# Loyalty Bonus Points Calculation
 
-> This is the simple client side app for  Lazada MY loyalty points calculation
+> This is the simple client side app for loyalty bonus points calculation
 
 ## Deployment
 
