@@ -1,7 +1,6 @@
-# Beehappy Project Dashboard
+# Lazada Loyalty Calculation
 
-> This is the project dashboard for Beehappy. 
-> Stakeholders are Araken development team, managers and project client.
+> This is the simple client side app for  Lazada MY loyalty points calculation
 
 ## Deployment
 
@@ -19,9 +18,3 @@ npm run build
 
 ## How to Change Stuff
 - Everything is in `index.html`
-- Remember to change the current date-time on `line 27`
-- How to [use](https://frappe.github.io/gantt/) the Gantt chart 
-
-## Libraries
-- [MomentJS](https://momentjs.com/)
-- [Frappe Gantt](https://github.com/frappe/gantt)
