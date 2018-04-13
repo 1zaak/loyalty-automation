@@ -24,16 +24,10 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.4.6/js/tabulator.min.js"></script>
 </head>    
 <body class="main container" style="font-family: 'Raleway', sans-serif">
-        <strong>
-            <h1 class="grid">
-                <span class="alert alert-success cell -12of12">LBC v1.1</span>            
-            </h1>
-        </strong>
-            
-        <div class="grid -between">        
-                <div class="cell -4of12">
+        <br><div class="grid -between">        
+                <div class="cell -3of12">
                         <div class="card">
-                                <header class="card-header">Info</header>
+                                <header class="card-header">LBC v1.1</header>
                                 <div class="card-content">
                                   <div class="inner">
                                         <h2>LBC calculates based on these logic</h2>
@@ -42,7 +36,6 @@
                                             <li>RM5 = 1 point</li>
                                             <li>ONLY SC coupons or no coupons are eligible for point</li>
                                             <li>Exclusion lists (1) Reseller (2) SKU</li>
-                                            
                                         </ul>
                                         <h2>Current required columns</h2>
                                                     <table style="width:100%">
@@ -86,12 +79,12 @@
                 </div>
                 
                       
-            <div class="cell -8of12">
+            <div class="cell -9of12">
                 <div class="card">                                            
                     <header class="card-header">Calculation Dashboard</header>
                     <div class="card-content container">             
-                            <div class="inner">
-                                    <h2>Select CSV</h2>   
+                            <div class="inner-calculator">
+                                <h2>Select CSV</h2>   
                                 <div class="grid -between"><input class="form-control" type="file" id="files" name="files[]" accept=".csv" /><span id="total"></span></div>
                                             
                                 <div id="loader-placeholder"></div>
@@ -138,11 +131,11 @@
             $("#loader-placeholder").append('<br><div class="loader"></div>')   
             
             if ($("#filters").length < 1) {
-                $(".filters-placeholder").append('<div id="filters"><h2>Filters</h2><div class="grid -middle -between">Exclude Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" /> &nbsp; Exclude SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
+                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
             }
 
             $("#table").remove()
-            $(".inner").append('<div id="table"></div>')
+            $(".inner-calculator").append('<div id="table" class="very compact"></div>')
             document.getElementById("downloadCsv").style.visibility = "hidden"
             document.getElementById("total").style.visibility = "hidden"
             var files = evt.target.files; // FileList object
@@ -192,8 +185,9 @@
                         })                    
 
                         $("#table").tabulator({
-                            height:300, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-                            layout:"fitDataFill", //fit columns to width of table (optional)
+                            responsiveLayout:true,
+                            height:350, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+                            layout:"fitDataFill",
                             columns:[ //Define Table Columns
                                 {title:"Order No", field:"orderNo",},
                                 {title:"Coupon Code", field:"couponCode"},
@@ -250,7 +244,6 @@
                             };
 
                             $('#filter').on( "click", function() {
-                                // console.log(finalResults, excludedResellersList, excludedSKUsList)
                                 finalResultsExcludeResellers = [];
                                 finalResultsExcludeSKUs = [];
                                 excludedResellersList.forEach(function(excludedReseller){
@@ -274,7 +267,8 @@
 
                                 //load data into the table
                                 if (finalResultsExcludeResellersAndSKUs.length !== finalResults) {
-                                    $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs);
+                                    $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs)
+                                    document.getElementById("total").innerHTML = "Total calculated: " + finalResultsExcludeResellersAndSKUs.length
                                 }
                             });
 
@@ -282,6 +276,7 @@
                                 finalResultsExcludeResellersAndSKUs = [];
                                 $("filter").click()
                                 $("#table").tabulator("setData", finalResults)
+                                document.getElementById("total").innerHTML = "Total calculated: " + finalResults.length
                             })
                         
                         $(".loader").remove();
@@ -294,9 +289,13 @@
 
         window.onload = function() {
             document.getElementById("downloadCsv").onclick = function() { 
-                var element = document.createElement('a');
-                console.log(finalResultsExcludeResellersAndSKUs , $("#downloadFilteredList").is(':checked'), finalResultsExcludeResellersAndSKUs)
-                finalCsv = $("#downloadFilteredList").is(':checked') && finalResultsExcludeResellersAndSKUs.length > 0 ? Papa.unparse(finalResultsExcludeResellersAndSKUs) : Papa.unparse(finalResults)
+                var element = document.createElement('a')
+
+                if ($("#downloadFilteredList").is(':checked') && finalResultsExcludeResellersAndSKUs.length > 0) {
+                    finalCsv = Papa.unparse(finalResultsExcludeResellersAndSKUs)
+                } else {
+                    finalCsv = Papa.unparse(finalResults)
+                }
                 
                 element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(finalCsv));
                 element.setAttribute('download', 'loyalty-automation-' + Date.now() + '.csv');
