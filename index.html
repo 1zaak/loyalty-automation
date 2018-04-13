@@ -26,20 +26,67 @@
 <body class="main container" style="font-family: 'Raleway', sans-serif">
         <strong>
             <h1 class="grid">
-                <span class="alert alert-success cell -12of12">LBC v1</span>            
+                <span class="alert alert-success cell -12of12">LBC v1.1</span>            
             </h1>
         </strong>
             
-        <div class="grid">            
-            <div class="cell -12of12">
-                    <div class="alert alert-info">
-                        <h2>Requirements</h2>
-                            <input disabled type="checkbox" checked> RM5 = 1 point<br>
-                            <input disabled type="checkbox" checked> Merge more than 1 entry into 1 order<br>
-                            <input disabled type="checkbox" checked> ONLY Purchase made without Coupons and SC coupons are eligible for point<br>
-                            <input disabled type="checkbox" > Exclusion lists (1) Reseller (2) SKU<br>
-                            <input disabled type="checkbox" > Extra points list (1) SKUs (2) Datetime/Period - First 5000..etc<br>
-                    </div>
+        <div class="grid -between">        
+                <div class="cell -4of12">
+                        <div class="card">
+                                <header class="card-header">Info</header>
+                                <div class="card-content">
+                                  <div class="inner">
+                                        <h2>LBC calculates based on these logic</h2>
+                                        <ul>
+                                            <li>Merge more than 1 entry into 1 order</li>
+                                            <li>RM5 = 1 point</li>
+                                            <li>ONLY SC coupons or no coupons are eligible for point</li>
+                                            <li>Exclusion lists (1) Reseller (2) SKU</li>
+                                            
+                                        </ul>
+                                        <h2>Current required columns</h2>
+                                                    <table style="width:100%">
+                                                            <tr>
+                                                              <th><b>Column Name</b></th>
+                                                              <th><b>Column No</b></th> 
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Order No</td>
+                                                              <td>11</td>
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Coupon Code</td>
+                                                              <td>5</td> 
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Total Price</td>
+                                                              <td>27</td> 
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Date Created</td>
+                                                              <td>8</td>
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Big Point ID</td>
+                                                              <td>28</td>
+                                                            </tr>
+                                                            <tr>
+                                                              <td>SKU</td>
+                                                              <td>19</td>
+                                                            </tr>
+                                                            <tr>
+                                                              <td>Supplier</td>
+                                                              <td>20</td>
+                                                            </tr>
+                                                          </table>
+                                  </div>
+                                </div>
+                              </div>
+        
+                </div>
+                
+                      
+            <div class="cell -8of12">
                 <div class="card">                                            
                     <header class="card-header">Calculation Dashboard</header>
                     <div class="card-content container">             
@@ -119,12 +166,14 @@
                             let indexToChange = _.findIndex(allUniqueOrdersWithPoints, { 'orderNo': row[10] });
                             let currentOrder = row[10]
                             let couponCode = row[4]
-                            let price = +row[11]
+                            let isStoreCoupon = row[4] && row[4].substring(0, 2).toLowerCase() === 'sc'
+                            let price = +row[26]
                             let createdDate = row[7]
                             let bigPointId = row[27]
                             let sku = row[18]
                             let reseller = row[19]
-                            if (!couponCode && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                               
+                            
+                            if (!couponCode || isStoreCoupon && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                               
                                 let pointsToAdd = price / 5;                                             
                                 allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
                                 allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
@@ -135,6 +184,7 @@
                             allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
                             allUniqueOrdersWithPoints[indexToChange]["sku"] = sku
                             allUniqueOrdersWithPoints[indexToChange]["reseller"] = reseller
+                            allUniqueOrdersWithPoints[indexToChange]["couponCode"] = couponCode
                         })
                         
                         finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
@@ -146,6 +196,7 @@
                             layout:"fitDataFill", //fit columns to width of table (optional)
                             columns:[ //Define Table Columns
                                 {title:"Order No", field:"orderNo",},
+                                {title:"Coupon Code", field:"couponCode"},
                                 {title:"Total Points", field:"totalPoints"},
                                 {title:"Total Price", field:"totalPrice"},
                                 {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
@@ -159,9 +210,7 @@
                         $("#table").tabulator("setData", finalResults);
 
                         // Download csv
-                        // csv = Papa.unparse(finalResults)
-                        if (csv || filterdCsv) { 
-                            $("#loader-placeholder").remove()
+                        $("#loader-placeholder").remove()
                             document.getElementById("downloadCsv").style.visibility = "visible" 
                             document.getElementById("total").style.visibility = "visible"
                             document.getElementById("total").innerHTML = "Total calculated: " + finalResults.length
@@ -224,7 +273,9 @@
                                 finalResultsExcludeResellersAndSKUs = _.uniq([].concat(finalResultsExcludeResellers, finalResultsExcludeSKUs));
 
                                 //load data into the table
-                                $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs);
+                                if (finalResultsExcludeResellersAndSKUs.length !== finalResults) {
+                                    $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs);
+                                }
                             });
 
                             $('#clearFilters').on( "click", function() {
@@ -232,7 +283,6 @@
                                 $("filter").click()
                                 $("#table").tabulator("setData", finalResults)
                             })
-                        }
                         
                         $(".loader").remove();
                     }
@@ -240,15 +290,13 @@
             }
         }
 
-        
-
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
 
         window.onload = function() {
             document.getElementById("downloadCsv").onclick = function() { 
                 var element = document.createElement('a');
-                console.log($("#downloadFilteredList").val())
-                finalCsv = $("#downloadFilteredList").val() ? Papa.unparse(finalResultsExcludeResellersAndSKUs) : Papa.unparse(finalResults)
+                console.log(finalResultsExcludeResellersAndSKUs , $("#downloadFilteredList").is(':checked'), finalResultsExcludeResellersAndSKUs)
+                finalCsv = $("#downloadFilteredList").is(':checked') && finalResultsExcludeResellersAndSKUs.length > 0 ? Papa.unparse(finalResultsExcludeResellersAndSKUs) : Papa.unparse(finalResults)
                 
                 element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(finalCsv));
                 element.setAttribute('download', 'loyalty-automation-' + Date.now() + '.csv');
@@ -280,6 +328,14 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        td {
+            text-align: center;
+        }
+
+        th {
+            font-weight: 100;
         }
         </style>
 </body>
