@@ -62,7 +62,11 @@
         var allUniqueOrders = [];
         var allUniqueOrdersWithPoints = [];
         var finalResults = [];
+        var finalResultsExcludeResellers = [];
+        var finalResultsExcludeSKUs = [];
+        var finalResultsExcludeResellersAndSKUs = [];
         var csv = [];
+        var filteredCsv = [];
         document.getElementById("downloadCsv").style.visibility = "hidden";
         document.getElementById("total").style.visibility = "hidden";
         function sameOrderNo(currentRow, nextRow) {                           
@@ -87,7 +91,7 @@
             $("#loader-placeholder").append('<br><div class="loader"></div>')   
             
             if ($("#filters").length < 1) {
-                $(".filters-placeholder").append('<div id="filters"><h2>Filters</h2><div class="grid -middle -between">Exclude Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" /> &nbsp; Exclude SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button></div></div><br>')
+                $(".filters-placeholder").append('<div id="filters"><h2>Filters</h2><div class="grid -middle -between">Exclude Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" /> &nbsp; Exclude SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
             }
 
             $("#table").remove()
@@ -155,8 +159,8 @@
                         $("#table").tabulator("setData", finalResults);
 
                         // Download csv
-                        csv = Papa.unparse(finalResults)
-                        if (csv) { 
+                        // csv = Papa.unparse(finalResults)
+                        if (csv || filterdCsv) { 
                             $("#loader-placeholder").remove()
                             document.getElementById("downloadCsv").style.visibility = "visible" 
                             document.getElementById("total").style.visibility = "visible"
@@ -197,18 +201,37 @@
                             };
 
                             $('#filter').on( "click", function() {
-                                console.log(excludedResellersList, excludedSKUsList)
-                                if ($("#exlude-resellers").is(":checked")) {
-                                    if ($("#exlude-skus").is(":checked")) {
-                                        console.log('exclude resellers and skus')
+                                // console.log(finalResults, excludedResellersList, excludedSKUsList)
+                                finalResultsExcludeResellers = [];
+                                finalResultsExcludeSKUs = [];
+                                excludedResellersList.forEach(function(excludedReseller){
+                                    finalResults.forEach(function(row) {
+                                        if (!_.isEqual(row.reseller.trim(), excludedReseller.trim())) {
+                                            finalResultsExcludeResellers.push(row)
+                                        }
+                                        
+                                    })
+                                })
 
-                                    } else {
-                                        console.log('exclude resellers only')
-                                    }
-                                } else if ($("#exlude-skus").is(":checked")) {
-                                    console.log('exclude skus only')
-                                }
+                                excludedSKUsList.forEach(function(excludedSKU){
+                                    finalResultsExcludeResellers.forEach(function(row) {
+                                        if (!_.isEqual(row.sku.trim(), excludedSKU.trim())) {
+                                            finalResultsExcludeSKUs.push(row)
+                                        }
+                                    })
+                                })
+                                
+                                finalResultsExcludeResellersAndSKUs = _.uniq([].concat(finalResultsExcludeResellers, finalResultsExcludeSKUs));
+
+                                //load data into the table
+                                $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs);
                             });
+
+                            $('#clearFilters').on( "click", function() {
+                                finalResultsExcludeResellersAndSKUs = [];
+                                $("filter").click()
+                                $("#table").tabulator("setData", finalResults)
+                            })
                         }
                         
                         $(".loader").remove();
@@ -217,12 +240,17 @@
             }
         }
 
+        
+
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
 
         window.onload = function() {
             document.getElementById("downloadCsv").onclick = function() { 
                 var element = document.createElement('a');
-                element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+                console.log($("#downloadFilteredList").val())
+                finalCsv = $("#downloadFilteredList").val() ? Papa.unparse(finalResultsExcludeResellersAndSKUs) : Papa.unparse(finalResults)
+                
+                element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(finalCsv));
                 element.setAttribute('download', 'loyalty-automation-' + Date.now() + '.csv');
 
                 element.style.display = 'none';
