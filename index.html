@@ -23,21 +23,21 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.4.6/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.4.6/js/tabulator.min.js"></script>
 </head>    
-<body class="main container" style="font-family: 'Raleway', sans-serif">
+<body class="main container" style="font-family: 'Raleway', sans-serif; min-width: 80vw;">
         <br><div class="grid -between">        
-                <div class="cell -3of12">
+                <div class="cell -2of12">
                         <div class="card">
                                 <header class="card-header">LBC v1.1</header>
                                 <div class="card-content">
                                   <div class="inner">
-                                        <h2>LBC calculates based on these logic</h2>
+                                        <h2>LBC logic</h2>
                                         <ul>
                                             <li>Merge more than 1 entry into 1 order</li>
                                             <li>RM5 = 1 point</li>
                                             <li>ONLY SC coupons or no coupons are eligible for point</li>
                                             <li>Exclusion lists (1) Reseller (2) SKU</li>
                                         </ul>
-                                        <h2>Current required columns</h2>
+                                        <h2>Columns</h2>
                                                     <table style="width:100%">
                                                             <tr>
                                                               <th><b>Column Name</b></th>
@@ -79,7 +79,7 @@
                 </div>
                 
                       
-            <div class="cell -9of12">
+            <div class="cell -10of12">
                 <div class="card">                                            
                     <header class="card-header">Calculation Dashboard</header>
                     <div class="card-content container">             
@@ -186,7 +186,7 @@
 
                         $("#table").tabulator({
                             responsiveLayout:true,
-                            height:350, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+                            height:320, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
                             layout:"fitDataFill",
                             columns:[ //Define Table Columns
                                 {title:"Order No", field:"orderNo",},
@@ -335,6 +335,14 @@
 
         th {
             font-weight: 100;
+        }
+
+        .cell {
+            padding: 2px;
+        }
+
+        .inner {
+            padding: 0 1rem;
         }
         </style>
 </body>
