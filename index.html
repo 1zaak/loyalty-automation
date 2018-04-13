@@ -26,14 +26,14 @@
 <body class="main container" style="font-family: 'Raleway', sans-serif">
         <strong>
             <h1 class="grid">
-                <span class="alert alert-success cell -12of12">LBC: Loyalty Bonus Calculator</span>            
+                <span class="alert alert-success cell -12of12">LBC v1</span>            
             </h1>
         </strong>
             
         <div class="grid">            
             <div class="cell -12of12">
                     <div class="alert alert-info">
-                        <h2>Features</h2>
+                        <h2>Requirements</h2>
                             <input disabled type="checkbox" checked> RM5 = 1 point<br>
                             <input disabled type="checkbox" checked> Merge more than 1 entry into 1 order<br>
                             <input disabled type="checkbox" checked> ONLY Purchase made without Coupons and SC coupons are eligible for point<br>
@@ -41,12 +41,14 @@
                             <input disabled type="checkbox" > Extra points list (1) SKUs (2) Datetime/Period - First 5000..etc<br>
                     </div>
                 <div class="card">                                            
-                    <header class="card-header">Upload CSV here</header>
+                    <header class="card-header">Calculation Dashboard</header>
                     <div class="card-content container">             
                             <div class="inner">
-                                <input type="file" id="files" name="files[]" multiple />   
-                                <hr>              
-                                <div id="loader-placeholder"></div>   
+                                    <h2>Select CSV</h2>   
+                                <div class="grid -between"><input class="form-control" type="file" id="files" name="files[]" accept=".csv" /><span id="total"></span></div>
+                                            
+                                <div id="loader-placeholder"></div>
+                                <div class="filters-placeholder"></div>
                                 <div id="table"></div>  
                             </div>
                     </div>                           
@@ -62,6 +64,7 @@
         var finalResults = [];
         var csv = [];
         document.getElementById("downloadCsv").style.visibility = "hidden";
+        document.getElementById("total").style.visibility = "hidden";
         function sameOrderNo(currentRow, nextRow) {                           
             return currentRow[10] === nextRow[10] ? true : false                                
         }
@@ -81,15 +84,20 @@
         }                    
 
         function handleFileSelect(evt) {
-            $("#loader-placeholder").append('<div class="loader"></div>')   
+            $("#loader-placeholder").append('<br><div class="loader"></div>')   
+            
+            if ($("#filters").length < 1) {
+                $(".filters-placeholder").append('<div id="filters"><h2>Filters</h2><div class="grid -middle -between">Exclude Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" /> &nbsp; Exclude SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button></div></div><br>')
+            }
+
             $("#table").remove()
             $(".inner").append('<div id="table"></div>')
             document.getElementById("downloadCsv").style.visibility = "hidden"
+            document.getElementById("total").style.visibility = "hidden"
             var files = evt.target.files; // FileList object
-
-            // Loop through the FileList and render image files as thumbnails.
+            
+            // Loop through the FileList 
             for (var i = 0, f; f = files[i]; i++) {
-                // console.log(f);
                 Papa.parse(f, {    
                     config:  {
                         delimiter: ',',
@@ -110,7 +118,9 @@
                             let price = +row[11]
                             let createdDate = row[7]
                             let bigPointId = row[27]
-                            if (!couponCode && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                                                    
+                            let sku = row[18]
+                            let reseller = row[19]
+                            if (!couponCode && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                               
                                 let pointsToAdd = price / 5;                                             
                                 allUniqueOrdersWithPoints[indexToChange].totalPoints += pointsToAdd 
                                 allUniqueOrdersWithPoints[indexToChange].totalPrice += price                                               
@@ -119,6 +129,8 @@
                             allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
                             allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
                             allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
+                            allUniqueOrdersWithPoints[indexToChange]["sku"] = sku
+                            allUniqueOrdersWithPoints[indexToChange]["reseller"] = reseller
                         })
                         
                         finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
@@ -126,7 +138,7 @@
                         })                    
 
                         $("#table").tabulator({
-                            height:450, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+                            height:300, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
                             layout:"fitDataFill", //fit columns to width of table (optional)
                             columns:[ //Define Table Columns
                                 {title:"Order No", field:"orderNo",},
@@ -134,15 +146,70 @@
                                 {title:"Total Price", field:"totalPrice"},
                                 {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
                                 {title:"Big Point ID", field:"bigPointId"},
+                                {title:"SKU", field:"sku"},
+                                {title:"Supplier", field:"reseller"},
                             ],
                         });
 
                         //load sample data into the table
                         $("#table").tabulator("setData", finalResults);
-                        
+
                         // Download csv
                         csv = Papa.unparse(finalResults)
-                        if (csv) { document.getElementById("downloadCsv").style.visibility = "visible" }
+                        if (csv) { 
+                            $("#loader-placeholder").remove()
+                            document.getElementById("downloadCsv").style.visibility = "visible" 
+                            document.getElementById("total").style.visibility = "visible"
+                            document.getElementById("total").innerHTML = "Total calculated: " + finalResults.length
+                            document.getElementById("filters").style.visibility = "visible";
+                            
+                            let excludedResellersList = []
+                            let excludedSKUsList = []
+
+                            document.getElementById('resellers-file').onchange = function(){
+                                let file = this.files[0];
+
+                                let reader = new FileReader();
+                                    reader.onload = function(progressEvent){
+                                    
+                                    // By lines
+                                    let lines = this.result.split('\n');
+                                    for(let line = 1; line < lines.length - 1; line++){
+                                        excludedResellersList.push(lines[line]);
+                                    }
+                                };
+                                reader.readAsText(file);
+                            };
+
+                            document.getElementById('skus-file').onchange = function(){
+                                let file = this.files[0];
+
+                                let reader = new FileReader();
+                                    reader.onload = function(progressEvent){
+                                    
+                                    // By lines
+                                    let lines = this.result.split('\n');
+                                    for(let line = 1; line < lines.length - 1; line++){
+                                        excludedSKUsList.push(lines[line]);
+                                    }
+                                };
+                                reader.readAsText(file);
+                            };
+
+                            $('#filter').on( "click", function() {
+                                console.log(excludedResellersList, excludedSKUsList)
+                                if ($("#exlude-resellers").is(":checked")) {
+                                    if ($("#exlude-skus").is(":checked")) {
+                                        console.log('exclude resellers and skus')
+
+                                    } else {
+                                        console.log('exclude resellers only')
+                                    }
+                                } else if ($("#exlude-skus").is(":checked")) {
+                                    console.log('exclude skus only')
+                                }
+                            });
+                        }
                         
                         $(".loader").remove();
                     }
@@ -151,6 +218,7 @@
         }
 
         document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
         window.onload = function() {
             document.getElementById("downloadCsv").onclick = function() { 
                 var element = document.createElement('a');
@@ -165,6 +233,8 @@
                 document.body.removeChild(element);
             };
         };
+
+        
         
         </script>  
 
