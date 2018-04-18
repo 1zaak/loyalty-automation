@@ -1,20 +1,14 @@
 {
   "name": "loyalty-automation",
   "version": "1.0.0",
-  "description": "Project dashboard for Lazada Loyalty calculation",
+  "description": "LPC: Loyalty Points Calculation",
   "main": "index.js",
-  "dependencies": {
-    "frappe-gantt": "^0.0.7",
-    "git-last-commit": "^0.3.0",
-    "moment": "^2.20.1",
-    "nodemailer": "^4.4.1",
-    "snapsvg": "^0.5.1"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "scripts": {
     "start": "browser-sync start -s -f \"*.*\"",
     "build": "npm install"
   },
-  "author": "Izaak Khaliq (https://github.com/1zaak)",
+  "author": "Izaak Khaliq",
   "license": "ISC"
 }
