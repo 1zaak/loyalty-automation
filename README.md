@@ -1,4 +1,4 @@
-# Loyalty Bonus Points Calculation
+# Loyalty Points Calculation
 
 > This is the simple client side app for loyalty bonus points calculation
 
@@ -6,13 +6,14 @@
 
 > Continuous deployment using [Netlify CDN](https://netlify.com).
 > Commits to master will trigger deploy in Netlify.
+> Site will be at [https://lpc.netlify.com/](https://lpc.netlify.com/)
 
 ## Development
 ``` bash
 # Use this to serve in localhost:3000 for development
 npm start
 
-# Usually we don't touch this: sends email to stakeholders during Netlify build (see mail-others.js file) 
+# Run this for Netlify build
 npm run build
 ```
 
