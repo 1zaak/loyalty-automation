@@ -40,36 +40,32 @@
                                         <h2>Columns</h2>
                                                     <table style="width:100%">
                                                             <tr>
-                                                              <th><b>Column Name</b></th>
-                                                              <th><b>Column No</b></th> 
+                                                              <th><b>ID</b></th>
+                                                              <th><b>Column</b></th> 
                                                             </tr>
                                                             <tr>
                                                               <td>Order No</td>
-                                                              <td>11</td>
+                                                              <td>K</td>
                                                             </tr>
                                                             <tr>
                                                               <td>Coupon Code</td>
-                                                              <td>5</td> 
+                                                              <td>E</td> 
                                                             </tr>
                                                             <tr>
                                                               <td>Total Price</td>
-                                                              <td>27</td> 
+                                                              <td>AA</td> 
                                                             </tr>
                                                             <tr>
                                                               <td>Date Created</td>
-                                                              <td>8</td>
+                                                              <td>H</td>
                                                             </tr>
                                                             <tr>
-                                                              <td>Big Point ID</td>
-                                                              <td>28</td>
+                                                              <td>Reseller</td>
+                                                              <td>AB</td>
                                                             </tr>
                                                             <tr>
                                                               <td>SKU</td>
-                                                              <td>19</td>
-                                                            </tr>
-                                                            <tr>
-                                                              <td>Supplier</td>
-                                                              <td>20</td>
+                                                              <td>S</td>
                                                             </tr>
                                                           </table>
                                   </div>
@@ -138,6 +134,9 @@
             $(".inner-calculator").append('<div id="table" class="very compact"></div>')
             document.getElementById("downloadCsv").style.visibility = "hidden"
             document.getElementById("total").style.visibility = "hidden"
+            document.getElementById("filters").style.visibility = "hidden";
+            document.getElementById("filter").disabled = true;
+            document.getElementById("clearFilters").disabled = true;
             var files = evt.target.files; // FileList object
             
             // Loop through the FileList 
@@ -162,9 +161,8 @@
                             let isStoreCoupon = row[4] && row[4].substring(0, 2).toLowerCase() === 'sc'
                             let price = +row[26]
                             let createdDate = row[7]
-                            let bigPointId = row[27]
+                            let reseller = row[27]
                             let sku = row[18]
-                            let reseller = row[19]
                             
                             if (!couponCode || isStoreCoupon && price > 0 && _.includes(allUniqueOrders, currentOrder)) {                               
                                 let pointsToAdd = price / 5;                                             
@@ -174,7 +172,6 @@
                             allUniqueOrdersWithPoints[indexToChange]["totalPoints"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPoints, 2)
                             allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
                             allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
-                            allUniqueOrdersWithPoints[indexToChange]["bigPointId"] = bigPointId
                             allUniqueOrdersWithPoints[indexToChange]["sku"] = sku
                             allUniqueOrdersWithPoints[indexToChange]["reseller"] = reseller
                             allUniqueOrdersWithPoints[indexToChange]["couponCode"] = couponCode
@@ -187,16 +184,15 @@
                         $("#table").tabulator({
                             responsiveLayout:true,
                             height:320, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-                            layout:"fitDataFill",
+                            layout:"fitData",
                             columns:[ //Define Table Columns
                                 {title:"Order No", field:"orderNo",},
                                 {title:"Coupon Code", field:"couponCode"},
-                                {title:"Total Points", field:"totalPoints"},
-                                {title:"Total Price", field:"totalPrice"},
-                                {title:"Date Created", field:"createdDate", sorter:"date", align:"center"},
-                                {title:"Big Point ID", field:"bigPointId"},
-                                {title:"SKU", field:"sku"},
-                                {title:"Supplier", field:"reseller"},
+                                {title:"Points", field:"totalPoints", width:75},
+                                {title:"Price", field:"totalPrice", width:70},
+                                {title:"Date Created", field:"createdDate", sorter:"date", align:"center", width:80},
+                                {title:"Reseller", field:"reseller"},
+                                {title:"SKU", field:"sku"}
                             ],
                         });
 
@@ -226,6 +222,8 @@
                                     }
                                 };
                                 reader.readAsText(file);
+                                document.getElementById("filter").disabled = false;
+                                document.getElementById("clearFilters").disabled = false;
                             };
 
                             document.getElementById('skus-file').onchange = function(){
@@ -241,39 +239,62 @@
                                     }
                                 };
                                 reader.readAsText(file);
+                                document.getElementById("filter").disabled = false;
+                                document.getElementById("clearFilters").disabled = false;
                             };
 
                             $('#filter').on( "click", function() {
                                 finalResultsExcludeResellers = [];
                                 finalResultsExcludeSKUs = [];
-                                excludedResellersList.forEach(function(excludedReseller){
-                                    finalResults.forEach(function(row) {
-                                        if (!_.isEqual(row.reseller.trim(), excludedReseller.trim())) {
-                                            finalResultsExcludeResellers.push(row)
-                                        }
-                                        
-                                    })
-                                })
+                                filteredFinalResults = [];
+                                if (excludedResellersList.length > 0 && excludedSKUsList.length < 1) {
+                                    excludedResellersList.forEach(function(excludedReseller){
+                                        finalResults.forEach(function(row) {
+                                            if (!_.isEqual(row.reseller.trim(), excludedReseller.trim())) {
+                                                filteredFinalResults.push(row)
+                                            }
+                                        })
+                                    }) 
+                                }
 
-                                excludedSKUsList.forEach(function(excludedSKU){
-                                    finalResultsExcludeResellers.forEach(function(row) {
+                                if (excludedResellersList.length < 1 && excludedSKUsList.length > 0) {
+                                    excludedSKUsList.forEach(function(excludedSKU) {
                                         if (!_.isEqual(row.sku.trim(), excludedSKU.trim())) {
-                                            finalResultsExcludeSKUs.push(row)
+                                            filteredFinalResults.push(row)
                                         }
                                     })
-                                })
-                                
-                                finalResultsExcludeResellersAndSKUs = _.uniq([].concat(finalResultsExcludeResellers, finalResultsExcludeSKUs));
+                                }
 
+                                if (excludedResellersList.length > 0 && excludedSKUsList.length > 0) {
+                                    excludedResellersList.forEach(function(excludedReseller){
+                                        excludedSKUsList.forEach(function(excludedSKU) {
+                                            finalResults.forEach(function(row) {
+                                                if (!_.isEqual(row.reseller.trim(), excludedReseller.trim()) && !_.isEqual(row.sku.trim(), excludedSKU.trim())) {
+                                                    filteredFinalResults.push(row)
+                                                }
+                                            })
+                                        })
+                                    })
+                                }
+
+                                filteredFinalResults = _.uniq(filteredFinalResults)
+                                
                                 //load data into the table
-                                if (finalResultsExcludeResellersAndSKUs.length !== finalResults) {
-                                    $("#table").tabulator("setData", finalResultsExcludeResellersAndSKUs)
-                                    document.getElementById("total").innerHTML = "Total calculated: " + finalResultsExcludeResellersAndSKUs.length
+                                if (filteredFinalResults.length !== finalResults) {
+                                    $("#table").tabulator("setData", filteredFinalResults)
+                                    document.getElementById("total").innerHTML = "Total calculated: " + filteredFinalResults.length
                                 }
                             });
 
                             $('#clearFilters').on( "click", function() {
-                                finalResultsExcludeResellersAndSKUs = [];
+                                filteredFinalResults = []
+                                excludedResellersList = []
+                                excludedSKUsList = []
+                                document.getElementById('skus-file').value = ""
+                                document.getElementById('resellers-file').value = ""
+                                document.getElementById("filter").disabled = true;
+                                document.getElementById("clearFilters").disabled = true;
+
                                 $("filter").click()
                                 $("#table").tabulator("setData", finalResults)
                                 document.getElementById("total").innerHTML = "Total calculated: " + finalResults.length
