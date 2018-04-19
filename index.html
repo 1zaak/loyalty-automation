@@ -127,7 +127,7 @@
             $("#loader-placeholder").append('<br><div class="loader"></div>')   
             
             if ($("#filters").length < 1) {
-                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><div id="filters-loader-placeholder"></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
+                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><div id="filters-loader-placeholder"></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox"> Download Filtered List</div></div><br>')
             }
 
             $("#table").remove()
@@ -295,7 +295,7 @@
                                 document.getElementById('skus-file').value = ""
                                 document.getElementById('resellers-file').value = ""
                                 document.getElementById("filter").disabled = false;
-
+                                $("#downloadFilteredList").prop('checked', false);
                                 $("filter").click()
                                 $("#table").tabulator("setData", finalResults)
                                 document.getElementById("total").innerHTML = "Total calculated: " + finalResults.length
@@ -313,8 +313,8 @@
             document.getElementById("downloadCsv").onclick = function() { 
                 var element = document.createElement('a')
 
-                if ($("#downloadFilteredList").is(':checked') && finalResultsExcludeResellersAndSKUs.length > 0) {
-                    finalCsv = Papa.unparse(finalResultsExcludeResellersAndSKUs)
+                if ($("#downloadFilteredList").is(':checked') && filteredFinalResults.length > 0) {
+                    finalCsv = Papa.unparse(filteredFinalResults)
                 } else {
                     finalCsv = Papa.unparse(finalResults)
                 }
