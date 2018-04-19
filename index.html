@@ -127,7 +127,7 @@
             $("#loader-placeholder").append('<br><div class="loader"></div>')   
             
             if ($("#filters").length < 1) {
-                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
+                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><div id="filters-loader-placeholder"></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" checked> Download Filtered List</div></div><br>')
             }
 
             $("#table").remove()
@@ -244,6 +244,7 @@
                             };
 
                             $('#filter').on( "click", function() {
+                                $("#filters-loader-placeholder").append('<br><div class="loader"></div>')
                                 finalResultsExcludeResellers = [];
                                 finalResultsExcludeSKUs = [];
                                 filteredFinalResults = [];
@@ -284,6 +285,7 @@
                                     $("#table").tabulator("setData", filteredFinalResults)
                                     document.getElementById("total").innerHTML = "Total calculated: " + filteredFinalResults.length
                                 }
+                                $("#filters-loader-placeholder").remove()
                             });
 
                             $('#clearFilters').on( "click", function() {
@@ -292,8 +294,7 @@
                                 excludedSKUsList = []
                                 document.getElementById('skus-file').value = ""
                                 document.getElementById('resellers-file').value = ""
-                                document.getElementById("filter").disabled = true;
-                                document.getElementById("clearFilters").disabled = true;
+                                document.getElementById("filter").disabled = false;
 
                                 $("filter").click()
                                 $("#table").tabulator("setData", finalResults)
