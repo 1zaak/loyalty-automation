@@ -92,7 +92,6 @@
                 </div>
             </div>           
         </div>
-    
 
     <script>
         var allUniqueOrders = [];
@@ -121,22 +120,35 @@
                     "totalPrice": 0,
                 })
             })
-        }                    
+        }              
+
+        function getAllIndexesForReseller(arr, val) {
+            var indexes = [], i;
+            for (i = 0; i < arr.length; i++)
+                if (Number(arr[i].reseller.trim()).toString() === val)
+                    indexes.push(i);
+            return indexes;
+        }
+
+        function getAllIndexesForSKU(arr, val) {
+            var indexes = [], i;
+            for (i = 0; i < arr.length; i++)
+                if (arr[i].sku.trim() === val)
+                    indexes.push(i);
+            return indexes;
+        }
+
+        function getAllIndexesForResellerAndSKU(arr, reseller, sku) {
+            var indexes = [], i;
+            for (i = 0; i < arr.length; i++)
+                if (arr[i].sku.trim() === sku || Number(arr[i].reseller.trim()).toString() === reseller)                    indexes.push(i);
+            return indexes;
+        }
 
         function handleFileSelect(evt) {
             $("#loader-placeholder").append('<br><div class="loader"></div>')   
             
-            if ($("#filters").length < 1) {
-                $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><div id="filters-loader-placeholder"></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox"> Download Filtered List</div></div><br>')
-            }
-
-            $("#table").remove()
-            $(".inner-calculator").append('<div id="table" class="very compact"></div>')
-            document.getElementById("downloadCsv").style.visibility = "hidden"
-            document.getElementById("total").style.visibility = "hidden"
-            document.getElementById("filters").style.visibility = "hidden";
-            document.getElementById("filter").disabled = true;
-            document.getElementById("clearFilters").disabled = true;
+            
             var files = evt.target.files; // FileList object
             
             // Loop through the FileList 
@@ -159,6 +171,7 @@
                             let currentOrder = row[10]
                             let couponCode = row[4]
                             let isStoreCoupon = row[4] && row[4].substring(0, 2).toLowerCase() === 'sc'
+                            // Paid Price (L) + Order_Item_Shipping_Amount (O) + Shipping_Surcharge (R)
                             let price = +row[26]
                             let createdDate = row[7]
                             let reseller = row[27]
@@ -173,30 +186,43 @@
                             allUniqueOrdersWithPoints[indexToChange]["totalPrice"] = _.round(allUniqueOrdersWithPoints[indexToChange].totalPrice, 2)
                             allUniqueOrdersWithPoints[indexToChange]["createdDate"] = createdDate
                             allUniqueOrdersWithPoints[indexToChange]["sku"] = sku
-                            allUniqueOrdersWithPoints[indexToChange]["reseller"] = reseller
+                            allUniqueOrdersWithPoints[indexToChange]["reseller"] = Number(reseller).toString()
                             allUniqueOrdersWithPoints[indexToChange]["couponCode"] = couponCode
                         })
                         
                         finalResults = _.filter(allUniqueOrdersWithPoints, function(allUniqueOrdersWithPoint) {
                             return allUniqueOrdersWithPoint.totalPoints > 0 
-                        })                    
+                        })       
 
+                        // Show filter section
+                        if ($("#filters").length < 1) {
+                            $(".filters-placeholder").append('<div id="filters"><h2>Exclude</h2><div class="grid -middle -between">Resellers: <input class="form-control" type="file" id="resellers-file" name="files[]" accept=".csv" />SKUs: <input class="form-control" type="file" id="skus-file" name="files[]" accept=".csv" /></div><div id="filters-loader-placeholder"></div><br><button id="filter" class="btn btn-info btn-ghost">Filter</button>&nbsp;<button id="clearFilters" class="btn btn-info btn-ghost">Clear</button>&nbsp;<input id="downloadFilteredList" type="checkbox" > Download Filtered List</div></div><br>')
+                        }
+                        $("#table").remove()
+                        $(".inner-calculator").append('<div id="table" class="very compact"></div>')
+                        document.getElementById("downloadCsv").style.visibility = "hidden"
+                        document.getElementById("total").style.visibility = "hidden"
+                        document.getElementById("filters").style.visibility = "hidden";
+                        document.getElementById("filter").disabled = true;
+                        document.getElementById("clearFilters").disabled = true;             
+                        
+                        // Initialize table
                         $("#table").tabulator({
                             responsiveLayout:true,
                             height:320, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
                             layout:"fitData",
                             columns:[ //Define Table Columns
-                                {title:"Order No", field:"orderNo",},
+                                {title:"Order No", field:"orderNo", width: 80},
                                 {title:"Coupon Code", field:"couponCode"},
-                                {title:"Points", field:"totalPoints", width:75},
+                                {title:"Points", field:"totalPoints", width:70},
                                 {title:"Price", field:"totalPrice", width:70},
-                                {title:"Date Created", field:"createdDate", sorter:"date", align:"center", width:80},
+                                {title:"Date Created", field:"createdDate", sorter:"date", align:"center", width:70},
                                 {title:"Reseller", field:"reseller"},
                                 {title:"SKU", field:"sku"}
                             ],
                         });
 
-                        //load sample data into the table
+                        // Load data into the table
                         $("#table").tabulator("setData", finalResults);
 
                         // Download csv
@@ -242,46 +268,50 @@
                                 document.getElementById("filter").disabled = false;
                                 document.getElementById("clearFilters").disabled = false;
                             };
-
+                            
                             $('#filter').on( "click", function() {
                                 $("#filters-loader-placeholder").append('<br><div class="loader"></div>')
                                 finalResultsExcludeResellers = [];
                                 finalResultsExcludeSKUs = [];
-                                filteredFinalResults = [];
+                                filteredFinalResults = _.clone(finalResults);
                                 if (excludedResellersList.length > 0 && excludedSKUsList.length < 1) {
+                                    let indexesToExclude = []
                                     excludedResellersList.forEach(function(excludedReseller){
-                                        finalResults.forEach(function(row) {
-                                            if (!_.isEqual(row.reseller.trim(), excludedReseller.trim())) {
-                                                filteredFinalResults.push(row)
-                                            }
-                                        })
-                                    }) 
-                                }
-
-                                if (excludedResellersList.length < 1 && excludedSKUsList.length > 0) {
-                                    excludedSKUsList.forEach(function(excludedSKU) {
-                                        if (!_.isEqual(row.sku.trim(), excludedSKU.trim())) {
-                                            filteredFinalResults.push(row)
+                                        let indexesMatched = getAllIndexesForReseller(filteredFinalResults, Number(excludedReseller.trim()).toString())
+                                        indexesToExclude = indexesToExclude.concat(indexesMatched)
+                                        
+                                       while (indexesToExclude.length) {
+                                            filteredFinalResults.splice(indexesToExclude.pop(), 1);
                                         }
                                     })
-                                }
+                                } else if (excludedResellersList.length < 1 && excludedSKUsList.length > 0) {
+                                    let indexesToExclude = []
+                                    excludedSKUsList.forEach(function(excludedSKU) {
+                                        let indexesMatched = getAllIndexesForSKU(filteredFinalResults, excludedSKU.trim())
+                                        indexesToExclude = indexesToExclude.concat(indexesMatched)
 
-                                if (excludedResellersList.length > 0 && excludedSKUsList.length > 0) {
+                                        while (indexesToExclude.length) {
+                                            filteredFinalResults.splice(indexesToExclude.pop(), 1);
+                                        }
+                                    })
+                                } else if (excludedResellersList.length > 0 && excludedSKUsList.length > 0) {
+                                    let indexesToExclude = []
                                     excludedResellersList.forEach(function(excludedReseller){
                                         excludedSKUsList.forEach(function(excludedSKU) {
-                                            finalResults.forEach(function(row) {
-                                                if (!_.isEqual(row.reseller.trim(), excludedReseller.trim()) && !_.isEqual(row.sku.trim(), excludedSKU.trim())) {
-                                                    filteredFinalResults.push(row)
-                                                }
-                                            })
+                                            let indexesMatched = getAllIndexesForResellerAndSKU(filteredFinalResults, Number(excludedReseller.trim()).toString(), excludedSKU.trim())
+                                            indexesToExclude = indexesToExclude.concat(indexesMatched)
+
+                                            while (indexesToExclude.length) {
+                                                filteredFinalResults.splice(indexesToExclude.pop(), 1);
+                                            }
                                         })
                                     })
                                 }
-
-                                filteredFinalResults = _.uniq(filteredFinalResults)
                                 
+                                filteredFinalResults = _.uniq(filteredFinalResults)
+                                console.log('done', filteredFinalResults)
                                 //load data into the table
-                                if (filteredFinalResults.length !== finalResults) {
+                                if (filteredFinalResults.length !== finalResults.length) {
                                     $("#table").tabulator("setData", filteredFinalResults)
                                     document.getElementById("total").innerHTML = "Total calculated: " + filteredFinalResults.length
                                 }
